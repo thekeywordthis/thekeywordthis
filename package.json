@@ -8,6 +8,8 @@
   "license": "MIT",
   "devDependencies": {},
   "dependencies": {
-    "express": "^4.4.5"
+    "colors": "^1.1.2",
+    "express": "^4.4.5",
+    "xregexp": "^3.0.0"
   }
 }

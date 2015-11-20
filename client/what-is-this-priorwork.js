@@ -1,26 +1,78 @@
+// maybe we can use WebPack to take advantage of CommonJS module
+// style, i.e. require(..) on the client-side
+
+var XRegExp = require('xregexp');
 var colors = require('colors');
 var execSync = require('child_process').execSync;
-console.log(arguments[2]);
-var str = execSync('cat ' + arguments[3].filename).toString('utf8');
+var fs = require('fs');
 
+var file = fs.readFileSync('./regex-testing-grounds.js').toString('utf8');
+
+// return value: array of objects {lineNumber: numThis}
 var locateThese = function(codeBlock) {
-    var locs = codeBlock.split('\n');
-    console.log(locs);
+    var lines = codeBlock.split('\n');
     var count = 0;
 
-    console.log(this);
-
-
-    for (var i=0; i<locs.length; i++) {
-        var matches = locs[i].match(/\bthis\b/g);
-        if (matches !== null) {
-            count += matches.length;
-            console.log((i+1) + '. ' + locs[i].trim().underline.red);
-        }
-    }
-    return count;
+  	var lineNumber = -1;
+  	var charPos = -1;
+  	var numOccurrences = 0;
+  	var occurrences = [];
+  	var occurrence;
+    lines.forEach(function(line, idx) {
+    	if(isComment(line)) {
+    		return;
+    	}
+  		occurrence = {};
+    	numOccurrences = countThis(line);
+    	if(numOccurrences) {
+    		lineNumber = idx + 1;
+    		occurrence[lineNumber] = numOccurrences;
+    		occurrences.push(occurrence);
+    	}
+    });
+    return occurrences;
 };
 
-console.log(str);
-console.log('total no. of this\'s: ' + locateThese(str));
+// return number of 'this' in string
+var countThis = function(string) {
+	var re = /\bthis\b/g;
+	return XRegExp.match(string, re).length;
+};
+
+// return Boolean
+var isComment = function(line) {
+	var re = /^\/\//;
+	return (XRegExp.match(line, re) !== null);
+};
+
+// return value: a modified codeBlock string
+var injectConsoleLogs = function(codeBlock, occurrences) {
+	var lineNumbers = occurrences.map(function(occurrence) {
+		return Object.keys(occurrence);
+	});
+	console.log('lineNumbers: ' + lineNumbers);
+	var lines = codeBlock.split('\n');
+	var injection;
+  lineNumbers.forEach(function(lineNumber, idx) {
+  	injection = 'execSync("echo line: ' + lineNumber + ' this: {" + JSON.stringify(this) + "} >> results.txt");';
+    lines[lineNumber-1] = injection + lines[lineNumber-1];
+  });
+  return lines.join('\n');
+};
+
+var addDependencies = function(codeBlock) {
+	var headers = 'var execSync = require("child_process").execSync;';
+	headers += 'execSync("> results.txt");';
+	return headers + codeBlock;
+};
+
+var occurrences = locateThese(file);
+var injectedFile = injectConsoleLogs(file, occurrences);
+fs.writeFileSync('transformed.js', addDependencies(injectedFile));
+
+
+
+
+
+
 
