@@ -7,6 +7,8 @@ var execSync = require('child_process').execSync;
 var fs = require('fs');
 
 var file = fs.readFileSync('./regex-testing-grounds.js').toString('utf8');
+// make a backup
+fs.writeFileSync('_original.js', file);
 
 // return value: array of objects {lineNumber: numThis}
 var locateThese = function(codeBlock) {
@@ -54,21 +56,33 @@ var injectConsoleLogs = function(codeBlock, occurrences) {
 	var lines = codeBlock.split('\n');
 	var injection;
   lineNumbers.forEach(function(lineNumber, idx) {
-  	injection = 'execSync("echo line: ' + lineNumber + ' this: {" + JSON.stringify(this) + "} >> results.txt");';
+    lines[lineNumber-1] = '$_$_$[' + lineNumber + '] = "' + lines[lineNumber-1] + '"';
+  	injection = 'execSync("echo ' + lineNumber + ' this: {" + JSON.stringify(this) + "} >> results.txt");';
     lines[lineNumber-1] = injection + lines[lineNumber-1];
   });
   return lines.join('\n');
 };
 
 var addDependencies = function(codeBlock) {
-	var headers = 'var execSync = require("child_process").execSync;';
-	headers += 'execSync("> results.txt");';
+	var headers = 'var $_$_$ = {};\n';
+	headers += 'var execSync = require("child_process").execSync;\n';
+	headers += 'execSync("> results.txt");\n';
 	return headers + codeBlock;
 };
 
+var addFooter = function(codeBlock) {
+	var footer = 'for (var key in $_$_$) { console.log(key + ". " + $_$_$[key]); }\n';
+	return codeBlock + footer;
+}
+
 var occurrences = locateThese(file);
 var injectedFile = injectConsoleLogs(file, occurrences);
-fs.writeFileSync('transformed.js', addDependencies(injectedFile));
+injectedFile = addDependencies(injectedFile);
+injectedFile = addFooter(injectedFile);
+fs.writeFileSync('transformed.js', injectedFile);
+
+// execute transformed.js...
+// builds file with line numbers and this bindings
 
 
 
