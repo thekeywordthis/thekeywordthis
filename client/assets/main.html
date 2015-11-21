@@ -1,8 +1,9 @@
 <div>Please enter your code here</div>
 
 <form>
-  <input class='usercode' type='text' placeholder='Enter code here'></input>
+  <!-- <input class='usercode' type='text' placeholder='Enter code here'></input> -->
+  <textarea class='usercode' ng-model='testcode'></textarea>
   <p></p>
-  <button type='submit' placeholder='Submit Code'>Submit Code</button>
+  <button type='submit' ng-click='submitCode(testcode)'>Submit Code</button>
 
 </form>  
