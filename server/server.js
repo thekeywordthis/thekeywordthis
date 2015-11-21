@@ -21,8 +21,6 @@ app.get('/', function(req, res) {
 })
 
 app.post('/usercode', function(req, res) {
-  // app.codeBlock = JSON.stringify(req.body.code);
-  // console.log(app.codeBlock);
   fs.writeFileSync('./client/testCodeBlock.js', req.body.code);
   res.send(JSON.stringify(req.body.code));
 })
@@ -30,5 +28,3 @@ app.post('/usercode', function(req, res) {
 app.listen(3000);
 
 module.exports = app;
-
-// app.codeBlock;
