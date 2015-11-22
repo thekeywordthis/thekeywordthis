@@ -4,9 +4,9 @@ var bodyParser  = require('body-parser');
 var http = require('http');
 var fs = require('fs');
 // var request = require('request');
+var beautify = require('js-beautify').js_beautify;
 
 var app = express();
-
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
@@ -21,7 +21,7 @@ app.get('/', function(req, res) {
 })
 
 app.post('/usercode', function(req, res) {
-  fs.writeFileSync('./client/testCodeBlock.js', req.body.code);
+  fs.writeFileSync('./client/testCodeBlock.js', beautify(req.body.code, { indent_size: 2 }));
   res.send(JSON.stringify(req.body.code));
 })
 
